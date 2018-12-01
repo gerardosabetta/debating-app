@@ -1,7 +1,7 @@
 import * as firebase from 'firebase'
 import 'firebase/firestore'
 
-import config from './.firebaseconfig'
+import { config } from './.firebaseconfig'
 
 firebase.initializeApp(config)
 

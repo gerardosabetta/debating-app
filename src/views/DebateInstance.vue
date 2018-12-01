@@ -105,7 +105,7 @@ export default {
   firestore () {
     return {
       room: rooms.doc(this.$route.params.id),
-      speakersList: rooms.doc(this.$route.params.id).collection('speakersList'),
+      speakersList: rooms.doc(this.$route.params.id).collection('speakersList').orderBy('timestamp'),
       interpellatorsList: rooms.doc(this.$route.params.id).collection('interpellatorsList'),
       votes: rooms.doc(this.$route.params.id).collection('votes')
     }
@@ -189,7 +189,8 @@ export default {
         rooms.doc(this.$route.params.id).collection('speakersList').doc(this.me.uid).set({
           uid: this.me.uid,
           name: this.me.displayName,
-          photo: this.me.photoURL
+          photo: this.me.photoURL,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
           debateLog(this.$route.params.id, 'ESKEREEEEE')
         })
