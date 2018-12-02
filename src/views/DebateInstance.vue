@@ -12,60 +12,68 @@
         </div>
       </v-card-title>
     </v-card>
+    <v-card v-else>
+      <v-subheader>Nadie está hablando en este momento.</v-subheader>
+    </v-card>
     <votation v-if="room.votation && room.votation.isActive" :votationInfo="room.votation"></votation>
     <v-btn block color="secondary" dark @click="addSpeaker()">Agregarme a la lista de oradores</v-btn>
     <v-btn v-if="room.canInterpelate && room.speaking" block color="secondary" dark @click="addInterpelation()">Quiero interpelar a {{room.speaking.name}}</v-btn>
+    <v-card>
+      <v-list v-if="room.speaking && room.speaking.name && interpellatorsList.length">
+        <v-subheader>Personas que quieren interpelar a {{room.speaking.name}}</v-subheader>
+        <v-list-tile avatar v-for="interpellator in interpellatorsList" :key="interpellator.name">
+          <v-list-tile-avatar>
+            <img :src="interpellator.photo" />
+          </v-list-tile-avatar>
+            <v-list-tile-content>
+              <v-list-tile-title v-text="interpellator.name"></v-list-tile-title>
+            </v-list-tile-content>
+            <v-list-tile-action v-if="me.uid === interpellator.uid">
+              <v-btn flat color="red" dark @click.native.stop="removeMeAsking = true">...</v-btn>
+              <v-dialog v-model="removeMeAsking" max-width="400">
+                <v-card>
+                  <v-card-title class="headline">¿Queres salir de la lista de interpeladores?</v-card-title>
+                  <v-card-text>Estas a punto de salir de la lista de interpeladores</v-card-text>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn left color="red darken-1" flat="flat" @click.native="removeMeFromInterpellators()">Si, borrarme</v-btn>
+                    <v-btn color="green darken-1" flat="flat" @click.native="removeMeAsking = false">Cancelar</v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+            </v-list-tile-action>
+        </v-list-tile>
+      </v-list>
+    </v-card>
 
-    <v-list v-if="room.speaking && room.speaking.name && interpellatorsList.length">
-      <v-subheader>Personas que quieren interpelar a {{room.speaking.name}}</v-subheader>
-      <v-list-tile avatar v-for="interpellator in interpellatorsList" :key="interpellator.name">
-        <v-list-tile-avatar>
-          <img :src="interpellator.photo" />
-        </v-list-tile-avatar>
-          <v-list-tile-content>
-            <v-list-tile-title v-text="interpellator.name"></v-list-tile-title>
-          </v-list-tile-content>
-          <v-list-tile-action v-if="me.uid === interpellator.uid">
-            <v-btn flat color="red" dark @click.native.stop="removeMeAsking = true">...</v-btn>
-            <v-dialog v-model="removeMeAsking" max-width="400">
-              <v-card>
-                <v-card-title class="headline">¿Queres salir de la lista de interpeladores?</v-card-title>
-                <v-card-text>Estas a punto de salir de la lista de interpeladores</v-card-text>
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn left color="red darken-1" flat="flat" @click.native="removeMeFromInterpellators()">Si, borrarme</v-btn>
-                  <v-btn color="green darken-1" flat="flat" @click.native="removeMeAsking = false">Cancelar</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
-          </v-list-tile-action>
-      </v-list-tile>
-    </v-list>
-    <v-list v-if="speakersList.length">
-      <v-subheader>Personas que quieren hablar</v-subheader>
-      <v-list-tile avatar v-for="(speaker, idx) in speakersList" :key="idx">
-        <v-list-tile-avatar>
-          <img :src="speaker.photo" />
-        </v-list-tile-avatar>
-          <v-list-tile-content>
-            <v-list-tile-title v-text="speaker.name"></v-list-tile-title>
-          </v-list-tile-content>
-          <v-list-tile-action v-if="me.uid === speaker.uid">
-            <v-btn flat color="red" dark @click.native.stop="removeMeSpeaking = true">...</v-btn>
-            <v-dialog v-model="removeMeSpeaking" max-width="400">
-              <v-card>
-                <v-card-title class="headline">¿Queres salir de la lista de oradores?</v-card-title>
-                <v-card-text>Estas a punto de salir de la lista de oradores</v-card-text>
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn left color="red darken-1" flat="flat" @click.native="removeMeFromSpeakers()">Si, borrarme</v-btn>
-                  <v-btn color="green darken-1" flat="flat" @click.native="removeMeSpeaking = false">Cancelar</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
-          </v-list-tile-action>
-      </v-list-tile>
-    </v-list>
+    <v-card>
+      <v-list v-if="speakersList.length">
+        <v-subheader>Personas que quieren hablar</v-subheader>
+        <v-list-tile avatar v-for="(speaker, idx) in speakersList" :key="idx">
+          <v-list-tile-avatar>
+            <img :src="speaker.photo" />
+          </v-list-tile-avatar>
+            <v-list-tile-content>
+              <v-list-tile-title v-text="speaker.name"></v-list-tile-title>
+            </v-list-tile-content>
+            <v-list-tile-action v-if="me.uid === speaker.uid">
+              <v-btn flat color="red" dark @click.native.stop="removeMeSpeaking = true">...</v-btn>
+              <v-dialog v-model="removeMeSpeaking" max-width="400">
+                <v-card>
+                  <v-card-title class="headline">¿Queres salir de la lista de oradores?</v-card-title>
+                  <v-card-text>Estas a punto de salir de la lista de oradores</v-card-text>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn left color="red darken-1" flat="flat" @click.native="removeMeFromSpeakers()">Si, borrarme</v-btn>
+                    <v-btn color="green darken-1" flat="flat" @click.native="removeMeSpeaking = false">Cancelar</v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+            </v-list-tile-action>
+        </v-list-tile>
+      </v-list>
+    </v-card>
+
     <v-snackbar :timeout="timeout" color="red" :vertical="true" v-model="alreadySpeaker">
       Ya estas en la lista de oradores.
       <v-btn dark flat @click.native="alreadySpeaker = false">Ok</v-btn>

@@ -1,6 +1,9 @@
 <template>
 <v-flex xs12 lg8 v-if="room">
   <h2 v-if="room.speaking">{{ room.speaking.name }} tiene la palabra</h2>
+  <v-card v-else>
+    <v-subheader>Nadie está hablando en este momento.</v-subheader>
+  </v-card>
   <v-list v-if="interpellatorsList.length">
     <v-subheader>Personas que quieren interpelar a {{ room.speaking.name }}</v-subheader>
     <v-list-tile avatar v-for="asker in interpellatorsList" :key="asker.name" >
@@ -15,40 +18,60 @@
       </v-list-tile-action>
     </v-list-tile>
   </v-list>
-
-
-  <v-list v-if="speakersList.length">
-    <v-subheader>Personas que quieren hablar</v-subheader>
-    <v-dialog
-      v-model="nextSpeakerDialog"
-      max-width="400">
-      <v-card>
-        <v-card-title class="headline">Vas a cambiar de orador</v-card-title>
-        <v-card-text>{{nextSpeakerCandidate.name}} va a ser el próximo orador</v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn left color="red darken-1" flat="flat" @click.native="removeSpeaker(nextSpeakerCandidate.uid)">Eliminar</v-btn>
-          <v-btn color="green darken-1" flat="flat" @click.native="nextSpeakerDialog = false">Cancelar</v-btn>
-          <v-btn color="green darken-1" flat="flat" @click="setAsSpeaker(nextSpeakerCandidate)">Ok</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    <v-list-tile avatar v-for="speaker in speakersList" :key="speaker['.key']" >
-      <v-list-tile-avatar>
-        <img :src="speaker.photo"/>
-      </v-list-tile-avatar>
-      <v-list-tile-content>
-        <v-list-tile-title v-text="speaker.name"></v-list-tile-title>
-      </v-list-tile-content>
-      <v-list-tile-action>
-        <v-btn flat color="primary" dark @click.native.stop="setNewSpeakerDialog(speaker)">...</v-btn>
-        <!-- <v-icon color="gray" @click="removeSpeaker(speaker['.key'])">delete</v-icon> -->
-      </v-list-tile-action>
-    </v-list-tile>
-  </v-list>
+<br>
+  <v-card>
+    <v-list v-if="speakersList.length">
+      <v-subheader>Personas que quieren hablar</v-subheader>
+      <v-dialog
+        v-model="nextSpeakerDialog"
+        max-width="400">
+        <v-card>
+          <v-card-title class="headline">Vas a cambiar de orador</v-card-title>
+          <v-card-text>{{nextSpeakerCandidate.name}} va a ser el próximo orador</v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn left color="red darken-1" flat="flat" @click.native="removeSpeaker(nextSpeakerCandidate.uid)">Eliminar</v-btn>
+            <v-btn color="green darken-1" flat="flat" @click.native="nextSpeakerDialog = false">Cancelar</v-btn>
+            <v-btn color="green darken-1" flat="flat" @click="setAsSpeaker(nextSpeakerCandidate)">Ok</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+      <v-list-tile avatar v-for="speaker in speakersList" :key="speaker['.key']" >
+        <v-list-tile-avatar>
+          <img :src="speaker.photo"/>
+        </v-list-tile-avatar>
+        <v-list-tile-content>
+          <v-list-tile-title v-text="speaker.name"></v-list-tile-title>
+        </v-list-tile-content>
+        <v-list-tile-action>
+          <v-btn flat color="primary" dark @click.native.stop="setNewSpeakerDialog(speaker)">...</v-btn>
+          <!-- <v-icon color="gray" @click="removeSpeaker(speaker['.key'])">delete</v-icon> -->
+        </v-list-tile-action>
+      </v-list-tile>
+    </v-list>
+  </v-card>
   <div v-if="room.speaking && room.speaking.name">
     <v-btn v-if="!room.canInterpelate" block color="secondary" dark @click="toggleQuestions(true)">Activar interpelaciones</v-btn>
     <v-btn v-if="room.canInterpelate"  block color="secondary" dark @click="toggleQuestions(false)">Desactivar interpelaciones</v-btn>
+    <v-dialog
+    v-model="clearSpeakerDialog"
+    max-width="400">
+      <v-card>
+        <v-card-title class="headline">Vas a quitar el orador activo</v-card-title>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn left color="red darken-1" flat="flat" @click.native="clearActiveSpeaker">Eliminar</v-btn>
+          <v-btn color="green darken-1" flat="flat" @click.native="clearSpeakerDialog = false">Cancelar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-btn
+    color="secondary"
+    block
+    @click="clearSpeakerDialog = true"
+    >
+    Quitar orador activo
+  </v-btn>
   </div>
   <create-votation></create-votation>
   <v-btn
@@ -74,6 +97,7 @@ export default {
     return {
       minutos: 20,
       nextSpeakerDialog: false,
+      clearSpeakerDialog: false,
       nextSpeakerCandidate: {},
       speakersList: [],
       interpellatorsList: [],
@@ -139,6 +163,14 @@ export default {
     toggleVotationActiveState () {
       this.room.votation.isActive = !this.room.votation.isActive
       rooms.doc(this.$route.params.id).update({votation: this.room.votation})
+    },
+    clearActiveSpeaker () {
+      this.room.speaking = null
+      rooms.doc(this.$route.params.id).update({
+        speaking: null
+      }).then(res => {
+        this.clearSpeakerDialog = false
+      })
     }
   }
 }
