@@ -14,11 +14,11 @@
           </v-card-title>
 
           <v-card-actions>
-            <v-btn flat>
-              <router-link class="link" :to="'/room/' + room.id">
-                Ingresar
+              <router-link class="link" tag="button" :to="'/room/' + room.id">
+                <v-btn flat>
+                    Ingresar
+                </v-btn>
               </router-link>
-            </v-btn>
             <v-spacer></v-spacer>
             <info-modal :roomId="room.id">
               <v-icon>person</v-icon> <span v-numberOfOnlineUsers="room"></span>

@@ -21,7 +21,7 @@
               <v-list-tile-title>Votacion</v-list-tile-title>
             </v-list-tile-content>
           </v-list-tile>
-          <v-list-tile @click="logout()">
+          <v-list-tile @click="openLogoutDialog()">
             <v-list-tile-action>
               <v-icon>close</v-icon>
             </v-list-tile-action>
@@ -46,6 +46,18 @@
     <v-content>
       <v-container fluid fill-height>
         <v-layout justify-center>
+          <v-dialog v-model="logoutDialog" width="500">
+            <v-card>
+              <v-card-title class="headline grey lighten-2" primary-title>Estas a punto de deslogearte</v-card-title>
+              <v-card-text>Deseas continuar?</v-card-text>
+              <v-divider></v-divider>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="red" flat @click="logout">Si</v-btn>
+                <v-btn color="primary" flat @click="logoutDialog = false">No</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
           <router-view></router-view>
         </v-layout>
       </v-container>
@@ -69,6 +81,7 @@ export default {
       drawer: null,
       logged: false,
       userInfo: null,
+      logoutDialog: false,
       routes: [
         { url: '/', description: 'Inicio', showIn: '*' },
         { url: '/create', description: 'Crear sala', showIn: '*' }
@@ -86,9 +99,13 @@ export default {
     logout () {
       firebase.auth().signOut().then(() => {
         this.logged = false
+        this.logoutDialog = false
         this.userInfo = null
         this.$router.push('auth')
       })
+    },
+    openLogoutDialog () {
+      this.logoutDialog = true
     }
   }
 }
