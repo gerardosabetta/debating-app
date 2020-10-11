@@ -15,7 +15,12 @@
     <v-card v-else>
       <v-subheader>Nadie está hablando en este momento.</v-subheader>
     </v-card>
-    <votation v-if="room.votation && room.votation.isActive" :votationInfo="room.votation"></votation>
+    <votation v-if="votations[0] && votations[0].isActive" :votationInfo="votations[0]"></votation>
+    {{votations[0]}}
+    <!-- <div v-for="votation in votations" :key="votation">
+      {{votation.title}}
+    </div>
+    {{votations}} -->
     <v-btn block color="secondary" dark @click="addSpeaker()">Agregarme a la lista de oradores</v-btn>
     <v-btn v-if="room.canInterpelate && room.speaking" block color="secondary" dark @click="addInterpelation()">Quiero interpelar a {{room.speaking.name}}</v-btn>
     <v-card>
@@ -96,7 +101,7 @@ export default {
       room: null,
       speakersList: [],
       interpellatorsList: [],
-      votes: [],
+      votations: [],
       name: '',
       photo: '',
       user: {},
@@ -115,13 +120,12 @@ export default {
       room: rooms.doc(this.$route.params.id),
       speakersList: rooms.doc(this.$route.params.id).collection('speakersList').orderBy('timestamp'),
       interpellatorsList: rooms.doc(this.$route.params.id).collection('interpellatorsList'),
-      votes: rooms.doc(this.$route.params.id).collection('votes')
+      votations: rooms.doc(this.$route.params.id).collection('votation').orderBy('timestamp', 'desc').limit(1)
     }
   },
   created () {
     this.me = firebase.auth().currentUser
     var userStatusDatabaseRef = firebase.database().ref('/status/' + this.$route.params.id + '/' + this.me.uid)
-    var userStatusFirestoreRef = firebase.firestore().doc('/rooms/' + this.$route.params.id + '/participants/' + this.me.uid)
     var isOfflineForDatabase = {
       state: 'offline',
       last_changed: firebase.database.ServerValue.TIMESTAMP,
@@ -136,39 +140,13 @@ export default {
       photo: this.me.photoURL
     }
 
-    var isOfflineForFirestore = {
-      state: 'offline',
-      last_changed: firebase.firestore.FieldValue.serverTimestamp(),
-      displayName: this.me.displayName,
-      photo: this.me.photoURL
-    }
-
-    var isOnlineForFirestore = {
-      state: 'online',
-      last_changed: firebase.firestore.FieldValue.serverTimestamp(),
-      displayName: this.me.displayName,
-      photo: this.me.photoURL
-    }
-
     firebase.database().ref('.info/connected').on('value', function (snapshot) {
-      if (snapshot.val() === false) {
-        userStatusFirestoreRef.set(isOfflineForFirestore)
-        return
-      }
-
-      userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function () {
-        userStatusFirestoreRef.set(isOnlineForFirestore)
-        userStatusDatabaseRef.set(isOnlineForDatabase)
+      userStatusDatabaseRef.onDisconnect().update(isOfflineForDatabase).then(function () {
+        userStatusDatabaseRef.update(isOnlineForDatabase)
       })
     })
   },
   beforeRouteLeave (to, from, next) {
-    var isOfflineForFirestore = {
-      state: 'offline',
-      last_changed: firebase.firestore.FieldValue.serverTimestamp(),
-      displayName: this.me.displayName,
-      photo: this.me.photoURL
-    }
     var isOfflineForDatabase = {
       state: 'offline',
       last_changed: firebase.database.ServerValue.TIMESTAMP,
@@ -177,9 +155,7 @@ export default {
     }
     // TODO: Mover el codigo repetido a utils
     var userStatusDatabaseRef = firebase.database().ref('/status/' + this.$route.params.id + '/' + this.me.uid)
-    var userStatusFirestoreRef = firebase.firestore().doc('/rooms/' + this.$route.params.id + '/participants/' + this.me.uid)
-    userStatusFirestoreRef.set(isOfflineForFirestore)
-    userStatusDatabaseRef.set(isOfflineForDatabase)
+    userStatusDatabaseRef.update(isOfflineForDatabase)
 
     console.log('ESKEREEEEE')
     next()
