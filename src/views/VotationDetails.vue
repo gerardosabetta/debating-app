@@ -1,6 +1,6 @@
 <template>
   <v-flex xs12 lg4>
-    <div v-if="room && room.votation && room.votation.options && votes">
+    <div v-if="room && votations[0] && votations.options && votes">
       <Vote-results :chartData="votationData"></Vote-results>
       <v-list v-if="!room.votation.isAnon">
         <v-subheader>Los votos</v-subheader>
@@ -24,6 +24,7 @@
     </div>
     <div v-else>
       No hay información para mostrar
+      {{votations[0]}}
     </div>
   </v-flex>
 </template>
@@ -39,12 +40,14 @@ export default {
   data () {
     return {
       room: null,
+      votations: [],
       votes: []
     }
   },
   firestore () {
     return {
       room: rooms.doc(this.$route.params.id),
+      votations: rooms.doc(this.$route.params.id).collection('votation').orderBy('timestamp', 'desc').limit(1),
       votes: rooms.doc(this.$route.params.id).collection('votes')
     }
   },

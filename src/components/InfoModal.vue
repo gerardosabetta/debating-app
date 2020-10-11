@@ -60,11 +60,10 @@ export default {
     }
   },
   created () {
-    firebase.firestore().doc('/rooms/' + this.roomId)
-      .collection('participants').onSnapshot(querySnapshot => {
-        this.participants = []
-        querySnapshot.forEach(doc => this.participants.push(doc.data()))
-      })
+    firebase.database().ref(`/status/${this.roomId}`)
+    .on('value', snapshot => {
+      this.participants = snapshot.val()
+    })
   }
 }
 </script>

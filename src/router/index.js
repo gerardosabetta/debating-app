@@ -55,29 +55,34 @@ let router = new Router({
       name: 'Mod',
       component: Moderator,
       meta: {
-        requiresAuth: true,
-        requiresToBeTheCreatorOfTheRoom: true
-      }
+        requiresAuth: true
+      },
+      beforeEnter: requiresToBeModGuard
     }
   ]
 })
 
-router.beforeEach(async(to, from, next) => {
-  let currentUser = firebase.auth().currentUser
-  let requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-  let requiresToBeTheCreatorOfTheRoom = to.matched.some(record => record.meta.requiresToBeTheCreatorOfTheRoom)
-  if (requiresToBeTheCreatorOfTheRoom) {
-    let creatorUid = await getCreatorUid(to.params.id)
-    if (requiresToBeTheCreatorOfTheRoom && creatorUid !== currentUser.uid) next('/')
+router.beforeEach(async (to, from, next) => {
+  const currentUser = firebase.auth().currentUser
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  if (requiresAuth && !currentUser) {
+    next('auth')
   }
-
-  if (requiresAuth && !currentUser) next('auth')
-  else if (!requiresAuth && currentUser) next('/')
-  else next()
+  next()
 })
 
-function getCreatorUid (roomId) {
-  return firebase.firestore().collection('rooms').doc(roomId).get().then(res => res.data().createdBy)
+async function requiresToBeModGuard (to, from, next) {
+  console.log('current user gg', await currentUserIsMod(to.params.id))
+  if (await currentUserIsMod((to.params.id))) next()
+  else next('/')
+}
+
+async function currentUserIsMod (roomId) {
+  const currentUser = firebase.auth().currentUser
+  const res = await firebase.database()
+    .ref(`/status/${roomId}/${currentUser.uid}`)
+    .once('value').then(snapshot => snapshot.val().isAdmin)
+  return res
 }
 
 export default router

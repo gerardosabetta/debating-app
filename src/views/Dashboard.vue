@@ -47,10 +47,11 @@ export default {
   directives: {
     numberOfOnlineUsers: {
       inserted (el, bind) {
-        firebase.firestore().doc('/rooms/' + bind.value.id)
-        .collection('participants')
-        .where('state', '==', 'online').onSnapshot(response => {
-          el.innerText = response.docs.length
+        firebase.database().ref(`/status/${bind.value.id}`)
+        .orderByChild('state')
+        .equalTo('online')
+        .on('value', snapshot => {
+          el.innerText = Object.entries(snapshot.val() || {}).length
         })
       }
     }

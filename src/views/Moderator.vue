@@ -72,6 +72,44 @@
     >
     Quitar orador activo
   </v-btn>
+    <v-dialog class="align-right" v-model="manageModeratorsDialog">
+    <v-card>
+      <v-card-title>
+        Manage mods
+      </v-card-title>
+      <v-card-text>
+        <v-list subheader>
+          <v-subheader>Select the admins</v-subheader>
+
+          <v-list-tile
+            v-for="(participant, uid) in participants"
+            :key="uid"
+            avatar
+            @click="toggleAdmin(participant, uid)"
+          >
+            <v-list-tile-avatar>
+              <img :src="participant.photo">
+            </v-list-tile-avatar>
+
+            <v-list-tile-content>
+              <v-list-tile-title v-html="participant.displayName"></v-list-tile-title>
+            </v-list-tile-content>
+
+            <v-list-tile-action>
+              <v-icon :color="participant.isAdmin ? 'teal' : 'grey'">gavel</v-icon>
+            </v-list-tile-action>
+          </v-list-tile>
+        </v-list>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+  <v-btn
+  @click.stop="manageModeratorsDialog = true"
+  color="secondary"
+  block
+  >
+    Administrar moderadores
+  </v-btn>
   </div>
   <create-votation></create-votation>
   <v-btn
@@ -98,14 +136,22 @@ export default {
       minutos: 20,
       nextSpeakerDialog: false,
       clearSpeakerDialog: false,
+      manageModeratorsDialog: false,
       nextSpeakerCandidate: {},
       speakersList: [],
+      participants: [],
       interpellatorsList: [],
       room: null
     }
   },
   components: {
     CreateVotation
+  },
+  created () {
+    firebase.database().ref(`/status/${this.$route.params.id}`)
+    .on('value', snapshot => {
+      this.participants = snapshot.val()
+    })
   },
   // firebase: {
   //   speakersList,
@@ -115,16 +161,19 @@ export default {
   firestore () {
     return {
       room: rooms.doc(this.$route.params.id),
-      speakersList: rooms.doc(this.$route.params.id).collection('speakersList'),
+      speakersList: rooms.doc(this.$route.params.id).collection('speakersList').orderBy('timestamp'),
       interpellatorsList: rooms.doc(this.$route.params.id).collection('interpellatorsList')
     }
   },
   methods: {
+    remove (item) {
+      const index = this.friends.indexOf(item.name)
+      if (index >= 0) this.friends.splice(index, 1)
+    },
     setAsSpeaker (user) {
       rooms.doc(this.$route.params.id).update({
         speaking: {
           name: user.name,
-          // email: user.email,
           uid: user.uid,
           photo: user.photo,
           time: this.minutos,
@@ -136,9 +185,6 @@ export default {
           this.nextSpeakerDialog = false
         }
       )
-      // speakersList.child(key).remove()
-      // interpelations.set([])
-      // this.nextSpeakerDialog = false
     },
     toggleQuestions (enabled) {
       rooms.doc(this.$route.params.id).update({canInterpelate: !this.room.canInterpelate})
@@ -154,6 +200,17 @@ export default {
       .collection('interpellatorsList')
       .doc(userUid)
       .delete()
+    },
+    toggleAdmin (participant, uid) {
+      // if (this.participants.filter(participant => participant.isAdmin).length === 1 &&
+      //     participant.isAdmin) return
+      const admins = this._getAdmins()
+      if (admins.length === 1 && participant.isAdmin) return
+      firebase.database().ref(`/status/${this.$route.params.id}/${uid}`).update({isAdmin: !participant.isAdmin})
+    },
+    _getAdmins () {
+      return Object.values(this.participants)
+        .filter(participant => participant.isAdmin)
     },
     setNewSpeakerDialog (user) {
       console.log(user)
@@ -177,10 +234,6 @@ export default {
 </script>
 
 <style>
-.cursor {
-  cursor: pointer;
-}
-
 .minutos {
   border: 1px solid orange;
 }

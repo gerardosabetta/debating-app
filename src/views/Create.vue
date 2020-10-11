@@ -58,12 +58,14 @@ export default {
         rooms.add({
           name: this.roomName,
           description: this.roomDescription,
-          createdBy: firebase.auth().currentUser.uid,
+          moderatorsUID: [firebase.auth().currentUser.uid],
           speaking: null,
           canInterpelate: true,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(res => {
-          this.$router.push(`/room/${res.id}`)
+        })
+        .then(room => {
+          firebase.database().ref(`/status/${room.id}/${firebase.auth().currentUser.uid}`).child('isAdmin').set(true)
+          this.$router.push(`/room/${room.id}`)
         })
       }
     }
