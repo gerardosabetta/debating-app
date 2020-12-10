@@ -1,7 +1,6 @@
 # debate
 
-> debate leo y gera
-
+> Debating PWA with firebase as the backend
 ## Build Setup
 
 ``` bash
